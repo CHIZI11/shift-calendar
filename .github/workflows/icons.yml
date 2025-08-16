@@ -1,0 +1,31 @@
+name: Generate PWA icons
+
+on:
+  push:
+    paths:
+      - "icons/calendar-maskable.svg"
+      - ".github/workflows/icons.yml"
+      - "manifest.json"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install librsvg (rsvg-convert)
+        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin
+
+      - name: Generate PNG icons
+        run: |
+          mkdir -p icons
+          rsvg-convert -w 192 -h 192 icons/calendar-maskable.svg > icons/icon-192.png
+          rsvg-convert -w 512 -h 512 icons/calendar-maskable.svg > icons/icon-512.png
+
+      - name: Commit generated icons
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "actions@github.com"
+          git add icons/icon-192.png icons/icon-512.png
+          git commit -m "chore(icons): auto-generate PNGs" || echo "No changes"
+          git push
