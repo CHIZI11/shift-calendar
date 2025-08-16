@@ -1,58 +1,94 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shift Calendar</title>
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#ffffff" />
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background: var(--bg, #fff);
+      color: var(--text, #000);
+      transition: background 0.3s, color 0.3s;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background: var(--header, #f5f5f5);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .theme-toggle, .menu-btn {
+      font-size: 24px;
+      cursor: pointer;
+      border: none;
+      background: none;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      padding: 20px;
+    }
+    .day {
+      aspect-ratio: 1/1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-weight: bold;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .day:hover {
+      transform: scale(1.1);
+    }
+    .today {
+      background: #4caf50;
+      color: white;
+    }
+    .night { background: #90caf9; }
+    .work { background: #a5d6a7; }
+    .off { background: #ef9a9a; }
+    /* тёмная тема */
+    body.dark {
+      --bg: #121212;
+      --text: #eee;
+      --header: #1e1e1e;
+    }
+  </style>
 </head>
 <body>
-  <header class="top-bar">
-    <button id="prevMonth">◀</button>
-    <h1 id="monthYear"></h1>
-    <div class="actions">
-      <button id="themeToggle" title="Тема">🌞</button>
-      <button id="menuToggle" title="Меню">≡</button>
-    </div>
+  <header>
+    <button class="theme-toggle">🌞</button>
+    <button class="menu-btn">☰</button>
   </header>
 
-  <main>
-    <div id="calendar"></div>
-  </main>
+  <main class="calendar" id="calendar"></main>
 
-  <div id="bottomSheet" class="hidden">
-    <div class="sheet-content">
-      <h3>Настройки графика</h3>
-      <div class="chip-row" id="weekDays"></div>
-      <div class="chip-row" id="shifts">
-        <button data-shift="Д">Д</button>
-        <button data-shift="Н">Н</button>
-        <button data-shift="В">В</button>
-      </div>
-      <div class="chip-row" id="presets">
-        <button data-preset="dnvv">Мой (Д/Н/В/В)</button>
-        <button data-preset="2on2off">2/2</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Модалка заметок -->
-  <div id="noteModal" class="modal hidden">
-    <div class="modal-content">
-      <span id="closeModal" class="close">&times;</span>
-      <h2 id="noteDate"></h2>
-      <textarea id="noteText" placeholder="Заметка..."></textarea>
-      <button id="saveNote">Сохранить</button>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
   <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js");
+    const calendar = document.getElementById("calendar");
+    const today = new Date().getDate();
+
+    // Простейший календарь на 30 дней
+    for (let i = 1; i <= 30; i++) {
+      const d = document.createElement("div");
+      d.className = "day";
+      if (i === today) d.classList.add("today");
+      if (i % 3 === 0) d.classList.add("night");
+      else if (i % 5 === 0) d.classList.add("off");
+      else d.classList.add("work");
+      d.textContent = i;
+      calendar.appendChild(d);
     }
+
+    // переключение темы
+    const toggle = document.querySelector(".theme-toggle");
+    toggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      toggle.textContent = document.body.classList.contains("dark") ? "🌙" : "🌞";
+    });
   </script>
 </body>
 </html>
