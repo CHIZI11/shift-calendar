@@ -23,6 +23,18 @@ let state = {
   dark: localStorage.getItem("theme") === "dark"
 };
 
+// ===== Seasons =====
+function setSeason() {
+  const m = new Date().getMonth(); // 0..11
+  let season = "winter";
+  if (m >= 2 && m <= 4) season = "spring";
+  else if (m >= 5 && m <= 7) season = "summer";
+  else if (m >= 8 && m <= 10) season = "autumn";
+  else season = "winter"; // dec-jan-feb
+  document.body.dataset.season = season;
+}
+setSeason();
+
 // ===== Theme handling (SVG переключение) =====
 function applyTheme() {
   document.body.classList.toggle("dark", state.dark);
@@ -37,15 +49,80 @@ $("#themeToggle").addEventListener("click", () => {
 });
 applyTheme();
 
-// ===== Bottom sheet =====
+// ===== Bottom sheet + жесты =====
 const bottomMenu = $("#bottomMenu");
-$("#menuToggle").addEventListener("click", () => {
-  const open = !bottomMenu.classList.contains("open");
-  bottomMenu.classList.toggle("open", open);
-  bottomMenu.setAttribute("aria-hidden", open ? "false" : "true");
-});
+const scrim = $("#scrim");
+const edgeOpen = $("#edgeOpen");
+const menuToggle = $("#menuToggle");
 
-// Controls init
+function openMenu() {
+  bottomMenu.classList.add("open");
+  bottomMenu.setAttribute("aria-hidden", "false");
+  scrim.classList.add("show");
+}
+function closeMenu() {
+  bottomMenu.classList.remove("open");
+  bottomMenu.setAttribute("aria-hidden", "true");
+  scrim.classList.remove("show");
+  bottomMenu.style.transform = ""; // сброс после drag
+  bottomMenu.classList.remove("dragging");
+}
+
+menuToggle.addEventListener("click", () => {
+  const open = !bottomMenu.classList.contains("open");
+  if (open) openMenu(); else closeMenu();
+});
+scrim.addEventListener("click", closeMenu);
+
+// Свайп-открытие: тянем от нижнего края (edgeOpen)
+let startY_open = null;
+edgeOpen.addEventListener("touchstart", (e) => {
+  startY_open = e.touches[0].clientY;
+}, {passive: true});
+edgeOpen.addEventListener("touchmove", (e) => {
+  if (startY_open == null) return;
+  const dy = e.touches[0].clientY - startY_open;
+  if (dy < -40) { // тянем вверх
+    openMenu();
+    startY_open = null;
+  }
+}, {passive: true});
+edgeOpen.addEventListener("touchend", () => startY_open = null);
+
+// Drag-to-close
+let startY = 0, currentY = 0, dragging = false, wasOpen = false;
+function onDragStart(y) {
+  dragging = true;
+  startY = y;
+  wasOpen = bottomMenu.classList.contains("open");
+  bottomMenu.classList.add("dragging");
+}
+function onDragMove(y) {
+  if (!dragging) return;
+  currentY = y;
+  const dy = Math.max(0, y - startY); // только вниз
+  if (wasOpen) {
+    bottomMenu.style.transform = `translateY(${dy}px)`;
+  }
+}
+function onDragEnd() {
+  if (!dragging) return;
+  dragging = false;
+  const dy = Math.max(0, currentY - startY);
+  if (wasOpen && dy > 80) {
+    closeMenu();
+  } else {
+    // вернуть на место
+    bottomMenu.style.transform = "";
+    bottomMenu.classList.remove("dragging");
+  }
+}
+
+bottomMenu.addEventListener("touchstart", (e) => onDragStart(e.touches[0].clientY), {passive: true});
+bottomMenu.addEventListener("touchmove", (e) => onDragMove(e.touches[0].clientY), {passive: true});
+bottomMenu.addEventListener("touchend", onDragEnd);
+
+// ===== Controls init =====
 const patternChips = $("#patternChips");
 const customRow = $("#customRow");
 const customInput = $("#customPattern");
@@ -72,7 +149,7 @@ $("#applyBtn").addEventListener("click", () => {
   state.cycleStart = cycleInput.value || state.cycleStart;
   state.offset = parseInt(offsetInput.value || "0", 10);
   if (state.patternKey === "custom") {
-    const arr = customInput.value.split(/[,\\s]+/).map(s => s.trim()).filter(Boolean);
+    const arr = customInput.value.split(/[,\s]+/).map(s => s.trim()).filter(Boolean);
     state.customPattern = arr;
     localStorage.setItem("customPattern", JSON.stringify(arr));
   }
@@ -80,8 +157,7 @@ $("#applyBtn").addEventListener("click", () => {
   localStorage.setItem("cycleStart", state.cycleStart);
   localStorage.setItem("offset", String(state.offset));
   renderCalendar();
-  bottomMenu.classList.remove("open");
-  bottomMenu.setAttribute("aria-hidden", "true");
+  closeMenu();
 });
 
 // ===== Calendar logic =====
@@ -148,12 +224,9 @@ function renderCalendar() {
     else if (label === "Н") cell.classList.add("work-night");
     else cell.classList.add("off");
 
-    // today ring
+    // today glow
     if (isThisMonth && d === today.getDate()) {
       cell.classList.add("today");
-      const ring = document.createElement("div");
-      ring.className = "ring";
-      cell.appendChild(ring);
     }
 
     const num = document.createElement("div");
