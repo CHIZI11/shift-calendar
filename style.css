@@ -1,0 +1,146 @@
+/* ====== Тема и базовые переменные ====== */
+:root {
+  --bg: #ffffff;
+  --fg: #0f172a;
+  --muted: #94a3b8;
+  --accent: #10b981;
+  --surface: #f8fafc;
+  --ring: rgba(16,185,129,0.35);
+}
+body.dark {
+  --bg: #0b1220;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #22c55e;
+  --surface: #0f172a;
+  --ring: rgba(34,197,94,0.35);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial;
+  -webkit-font-smoothing: antialiased;
+  transition: background .3s ease, color .3s ease;
+}
+
+/* ====== Верхняя панель ====== */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: grid; grid-template-columns: 44px 1fr 44px;
+  align-items: center; gap: 8px; padding: 10px 12px;
+  backdrop-filter: blur(8px);
+  background: color-mix(in oklab, var(--bg) 85%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+}
+.app-title { margin: 0; font-size: 16px; text-align: center; font-weight: 800; letter-spacing: .2px; }
+
+.icon-btn {
+  width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; background: transparent; border-radius: 12px; cursor: pointer;
+  transition: background .2s ease, transform .05s ease;
+}
+.icon-btn:hover { background: color-mix(in oklab, var(--fg) 8%, transparent); }
+.icon-btn:active { transform: scale(0.98); }
+
+.icon { width: 24px; height: 24px; stroke: currentColor; fill: none; transition: opacity .25s ease, transform .35s ease; }
+.hidden { opacity: 0; transform: scale(.85); position: absolute; }
+
+/* ====== Заголовок месяца ====== */
+.month-header {
+  display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; gap: 8px;
+  padding: 12px 16px;
+}
+.nav-btn {
+  width: 40px; height: 40px; border: none; border-radius: 10px;
+  background: var(--surface); color: var(--fg); cursor: pointer;
+}
+.month-label { text-align: center; font-weight: 800; letter-spacing: .3px; }
+
+/* ====== Календарь ====== */
+.calendar {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+  padding: 0 12px 20px;
+}
+.cell {
+  aspect-ratio: 1/1; display: grid; place-items: center;
+  border-radius: 14px; position: relative; user-select: none;
+  background: var(--surface);
+  border: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+  font-weight: 700;
+}
+.cell.header {
+  background: transparent; border: none; color: var(--muted);
+}
+.cell .pill {
+  width: 36px; height: 36px; border-radius: 999px; display: grid; place-items: center;
+  transition: transform .15s ease;
+}
+.cell.work-day .pill { background: color-mix(in oklab, var(--accent) 18%, var(--bg)); color: var(--accent); }
+.cell.work-night .pill { background: color-mix(in oklab, #3b82f6 18%, var(--bg)); color: #3b82f6; }
+.cell.off .pill { background: color-mix(in oklab, var(--fg) 8%, var(--bg)); color: var(--muted); }
+
+.cell.today .ring {
+  position: absolute; inset: 0; border-radius: 14px;
+  outline: 2px solid var(--ring); outline-offset: 0; pointer-events: none;
+}
+.cell:hover .pill { transform: scale(1.06); }
+
+/* Номер дня (уголок) */
+.cell .num {
+  position: absolute; top: 6px; left: 8px;
+  font-size: 12px; color: var(--muted); font-weight: 800;
+}
+
+/* ====== Bottom sheet ====== */
+.bottom-menu {
+  position: fixed; left: 0; right: 0; bottom: -460px;
+  background: var(--bg);
+  border-top-left-radius: 18px; border-top-right-radius: 18px;
+  box-shadow: 0 -10px 30px rgba(0,0,0,.18);
+  padding: 10px 14px 16px;
+  transition: bottom .28s ease;
+  z-index: 50;
+}
+.bottom-menu.open { bottom: 0; }
+.bottom-menu .handle {
+  width: 40px; height: 4px; border-radius: 2px;
+  background: color-mix(in oklab, var(--fg) 20%, transparent);
+  margin: 6px auto 12px;
+}
+.bottom-menu h2 { font-size: 16px; margin: 4px 0 10px 4px; }
+.row {
+  display: grid; grid-template-columns: 140px 1fr; align-items: center;
+  gap: 10px; margin: 10px 0;
+}
+.label { color: var(--muted); font-weight: 700; }
+
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  padding: 8px 12px; border-radius: 999px; border: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+  background: var(--surface); color: var(--fg); cursor: pointer; font-weight: 700;
+}
+.chip.active { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent); }
+
+.hidden { display: none; }
+
+input[type="date"], input[type="text"], input[type="number"] {
+  padding: 10px 12px; border-radius: 10px;
+  border: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+  background: var(--surface); color: var(--fg);
+}
+
+.primary {
+  margin-top: 8px; width: 100%; padding: 12px 14px;
+  border-radius: 12px; border: none; background: var(--accent);
+  color: white; font-weight: 900; cursor: pointer;
+}
+
+/* ====== Адаптив ====== */
+@media (min-width: 640px) {
+  .cell .pill { width: 40px; height: 40px; }
+}
