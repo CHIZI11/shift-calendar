@@ -1,182 +1,34 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Shift Calendar</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.json">
-  <script defer src="script.js"></script>
+  <script src="script.js" defer></script>
 </head>
 <body>
-  <header class="top-bar">
-    <button id="theme-toggle" aria-label="Toggle theme" class="icon-btn">
-      <!-- SVG солнце/луна -->
-      <svg id="theme-icon" viewBox="0 0 24 24">
-        <circle class="sun-core" cx="12" cy="12" r="5"></circle>
-        <g class="sun-rays">
-          <line x1="12" y1="1" x2="12" y2="4"/>
-          <line x1="12" y1="20" x2="12" y2="23"/>
-          <line x1="1" y1="12" x2="4" y2="12"/>
-          <line x1="20" y1="12" x2="23" y2="12"/>
-          <line x1="4.2" y1="4.2" x2="6.3" y2="6.3"/>
-          <line x1="17.7" y1="17.7" x2="19.8" y2="19.8"/>
-          <line x1="4.2" y1="19.8" x2="6.3" y2="17.7"/>
-          <line x1="17.7" y1="6.3" x2="19.8" y2="4.2"/>
-        </g>
-        <circle class="moon" cx="12" cy="12" r="6" mask="url(#moon-mask)" />
-        <mask id="moon-mask">
-          <rect width="24" height="24" fill="white"/>
-          <circle cx="16" cy="12" r="6" fill="black"/>
-        </mask>
-      </svg>
-    </button>
-
-    <button id="menu-toggle" aria-label="Menu" class="icon-btn">
-      <svg viewBox="0 0 24 24">
-        <line x1="4" y1="6" x2="20" y2="6"/>
-        <line x1="4" y1="12" x2="20" y2="12"/>
-        <line x1="4" y1="18" x2="20" y2="18"/>
-      </svg>
-    </button>
+  <header>
+    <button id="themeToggle" class="icon-btn" aria-label="Сменить тему"></button>
+    <h1>Календарь смен</h1>
+    <button id="menuToggle" class="icon-btn" aria-label="Меню">☰</button>
   </header>
+  
+  <main id="calendar"></main>
 
-  <main>
-    <div id="calendar"></div>
-  </main>
-</body>
-</html> state.monthOffset--; render(); };
-  $('#nextBtn').onclick = ()=>{ state.monthOffset++; render(); };
-
-  /* ---------- sheet (menu) ---------- */
-  const sheet = $('#sheet');
-  const openSheet = (yes)=>{ sheet.classList.toggle('show', yes); sheet.setAttribute('aria-hidden', yes? 'false':'true'); };
-  $('#menuBtn').onclick = ()=> openSheet(!sheet.classList.contains('show'));
-
-  const weekNames = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-  const chipsWeek = $('#chipsWeek');
-  chipsWeek.innerHTML = weekNames.map((n,i)=>`<button class="chip" data-dow="${i+1}">${n}</button>`).join('');
-
-  // Выбор смены для активного дня недели
-  let activeDOW = null;
-  chipsWeek.addEventListener('click', e=>{
-    const b = e.target.closest('[data-dow]'); if(!b) return;
-    $$('.chip[data-dow]', chipsWeek).forEach(x=>x.classList.toggle('active', x===b));
-    activeDOW = +b.dataset.dow;
-  });
-  // Кнопки смен
-  $$('.row .chip[data-sel]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      if(!activeDOW){ alert('Сначала выбери день недели'); return; }
-      const sel = btn.dataset.sel;
-      if(sel==='x') delete state.weekdayRules[activeDOW];
-      else state.weekdayRules[activeDOW] = sel;
-      store.write(state); render();
-    });
-  });
-
-  // Пресеты
-  const presetInfo = $('#presetInfo');
-  const presets = {
-    dnvv: ['Д','Н','В','В'],
-    '2on2off': ['Д','Д','Н','Н','В','В']
-  };
-  $$('.row .chip[data-preset]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      state.preset = btn.dataset.preset;
-      store.write(state); render();
-    });
-  });
-
-  // Старт цикла
-  const cycleStartInp = $('#cycleStart');
-  const saveStart = $('#saveStart');
-  const updateCycleStartUI = ()=> { cycleStartInp.value = state.cycleStart; };
-  saveStart.onclick = ()=>{ state.cycleStart = cycleStartInp.value || new Date().toISOString().slice(0,10); store.write(state); render(); };
-  updateCycleStartUI();
-
-  /* ---------- core: build month grid ---------- */
-  const title = $('#title');
-  const grid = $('#grid');
-
-  function getShiftForDate(dt){
-    // приоритет: правило по дню недели → пресет цикла
-    const dow = ((dt.getDay()+6)%7)+1; // 1..7 (Пн..Вс)
-    const rule = state.weekdayRules[dow];
-    if(rule) return rule;
-
-    const arr = presets[state.preset] || presets.dnvv;
-    const start = new Date(state.cycleStart + 'T00:00:00');
-    const diff = Math.floor((dt - start) / (1000*60*60*24));
-    const idx = ((diff % arr.length)+arr.length)%arr.length;
-    return arr[idx];
-  }
-
-  function render(){
-    const base = firstOfMonth(state.monthOffset);
-    const y = base.getFullYear(), m = base.getMonth();
-    title.textContent = base.toLocaleString('ru', {month:'long', year:'numeric'});
-
-    // инфо по пресету
-    presetInfo.textContent = `Пресет: ${state.preset === 'dnvv' ? 'Д / Н / В / В' : 'ДД / НН / ВВ'}`;
-
-    // очистка
-    grid.innerHTML = '';
-
-    // пустые до первого дня
-    const firstDow = ((new Date(y,m,1).getDay()+6)%7)+1; // 1..7
-    for(let i=1;i<firstDow;i++){ const d = document.createElement('div'); grid.appendChild(d); }
-
-    const daysInMonth = new Date(y, m+1, 0).getDate();
-    for(let d=1; d<=daysInMonth; d++){
-      const dt = new Date(y,m,d);
-      const shift = getShiftForDate(dt);
-
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      const badge = document.createElement('div');
-      badge.className = 'badge';
-      badge.dataset.s = shift;
-      badge.textContent = d;
-      cell.appendChild(badge);
-
-      const isToday = (()=> {
-        const t=new Date();
-        return d===t.getDate() && m===t.getMonth() && y===t.getFullYear() && state.monthOffset===0;
-      })();
-      if(isToday) badge.classList.add('today');
-
-      grid.appendChild(cell);
-    }
-
-    // обновить активные чипсы недель по состоянию
-    $$('.chip[data-dow]', chipsWeek).forEach(btn=>{
-      btn.classList.toggle('active', +btn.dataset.dow===activeDOW);
-      btn.title = state.weekdayRules[+btn.dataset.dow] ? `Назначено: ${state.weekdayRules[+btn.dataset.dow]}` : 'Не назначено';
-    });
-
-    store.write(state);
-  }
-
-  render();
-
-  // закрытие шита по свайпу вниз (простое)
-  let startY=null;
-  sheet.addEventListener('touchstart',e=>{ startY=e.touches[0].clientY; },{passive:true});
-  sheet.addEventListener('touchmove',e=>{
-    if(startY==null) return;
-    const dy = e.touches[0].clientY - startY;
-    if(dy>50) openSheet(false);
-  },{passive:true});
-  // клик вне шита для закрытия
-  document.addEventListener('click', e=>{
-    if(!sheet.classList.contains('show')) return;
-    const inside = e.target.closest('.sheet');
-    const isMenuBtn = e.target.closest('#menuBtn');
-    if(!inside && !isMenuBtn) openSheet(false);
-  });
-
-})();
-</script>
+  <div id="menu" class="menu-panel">
+    <h2>Выбор графика</h2>
+    <div class="days-row">
+      <button>Пн</button><button>Вт</button><button>Ср</button>
+      <button>Чт</button><button>Пт</button><button>Сб</button><button>Вс</button>
+    </div>
+    <div class="shift-row">
+      <button>Д</button><button>Н</button><button>В</button>
+    </div>
+    <div class="patterns">
+      <button>2/2</button><button>Подробный</button>
+    </div>
+  </div>
 </body>
 </html>
