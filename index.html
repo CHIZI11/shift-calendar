@@ -1,96 +1,37 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Календарь смен</title>
-  <meta name="theme-color" content="#10b981" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css" />
+  <link id="theme-style" rel="stylesheet" href="styles-minimal.css">
 </head>
 <body>
-  <header class="topbar">
-    <!-- Theme toggle -->
-    <button id="themeToggle" class="icon-btn" aria-label="Сменить тему">
-      <svg id="sunIcon" viewBox="0 0 24 24" class="icon">
-        <circle cx="12" cy="12" r="5" fill="currentColor"/>
-        <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <line x1="12" y1="1" x2="12" y2="4"/>
-          <line x1="12" y1="20" x2="12" y2="23"/>
-          <line x1="1" y1="12" x2="4" y2="12"/>
-          <line x1="20" y1="12" x2="23" y2="12"/>
-          <line x1="4.2" y1="4.2" x2="6.3" y2="6.3"/>
-          <line x1="17.7" y1="17.7" x2="19.8" y2="19.8"/>
-          <line x1="4.2" y1="19.8" x2="6.3" y2="17.7"/>
-          <line x1="17.7" y1="6.3" x2="19.8" y2="4.2"/>
-        </g>
-      </svg>
-      <svg id="moonIcon" viewBox="0 0 24 24" class="icon hidden">
-        <path d="M21 12.8A9 9 0 0 1 11.2 3 7 7 0 1 0 21 12.8z" fill="currentColor"/>
-      </svg>
-    </button>
+  <div class="calendar">
+    <div class="day">Пн</div>
+    <div class="day">Вт</div>
+    <div class="day">Ср</div>
+    <div class="day">Чт</div>
+    <div class="day">Пт</div>
+    <div class="day">Сб</div>
+    <div class="day">Вс</div>
+  </div>
 
-    <h1 class="app-title">Календарь смен</h1>
+  <button id="styleSwitcher" style="position:fixed;bottom:20px;right:20px;padding:10px 20px;">Сменить стиль</button>
 
-    <!-- Menu toggle -->
-    <button id="menuToggle" class="icon-btn" aria-label="Открыть меню">
-      <svg viewBox="0 0 24 24" class="icon">
-        <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
-      </svg>
-    </button>
-  </header>
+  <script>
+    const styles = [
+      "styles-minimal.css",
+      "styles-colorful.css",
+      "styles-material.css"
+    ];
+    let current = 0;
 
-  <main>
-    <section class="month-header">
-      <button id="prevMonth" class="nav-btn" aria-label="Предыдущий месяц">‹</button>
-      <div id="monthLabel" class="month-label"></div>
-      <button id="nextMonth" class="nav-btn" aria-label="Следующий месяц">›</button>
-    </section>
-
-    <section id="calendar" class="calendar"></section>
-  </main>
-
-  <!-- Bottom sheet: выбор графика -->
-  <aside id="bottomMenu" class="bottom-menu" aria-hidden="true">
-    <div class="handle"></div>
-    <h2>Настройки графика</h2>
-
-    <div class="row">
-      <span class="label">Шаблон:</span>
-      <div class="chips" id="patternChips">
-        <button class="chip" data-pattern="dnvv">Д/Н/В/В</button>
-        <button class="chip" data-pattern="2on2off">2/2</button>
-        <button class="chip" data-pattern="5_2">5/2</button>
-        <button class="chip" data-pattern="custom">Пользовательский</button>
-      </div>
-    </div>
-
-    <div id="customRow" class="row hidden">
-      <span class="label">Пользовательский:</span>
-      <input id="customPattern" type="text" placeholder="Напр.: Д,Н,В,В" />
-    </div>
-
-    <div class="row">
-      <span class="label">Старт цикла:</span>
-      <input id="cycleStart" type="date" />
-    </div>
-    <div class="row">
-      <span class="label">Сдвиг:</span>
-      <input id="cycleOffset" type="number" min="0" max="365" value="0" />
-    </div>
-
-    <div class="row">
-      <span class="label">Легенда:</span>
-      <div class="legend">
-        <span class="badge day">Д</span>
-        <span class="badge night">Н</span>
-        <span class="badge off">В</span>
-      </div>
-    </div>
-
-    <button id="applyBtn" class="primary">Применить и сохранить</button>
-  </aside>
-
-  <script src="script.js"></script>
+    document.getElementById("styleSwitcher").addEventListener("click", () => {
+      current = (current + 1) % styles.length;
+      document.getElementById("theme-style").setAttribute("href", styles[current]);
+    });
+  </script>
 </body>
 </html>
