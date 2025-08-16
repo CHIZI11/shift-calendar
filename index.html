@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shift Calendar</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#ffffff" />
+</head>
+<body>
+  <header class="top-bar">
+    <button id="prevMonth">◀</button>
+    <h1 id="monthYear"></h1>
+    <div class="actions">
+      <button id="themeToggle" title="Тема">🌞</button>
+      <button id="menuToggle" title="Меню">≡</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="calendar"></div>
+  </main>
+
+  <div id="bottomSheet" class="hidden">
+    <div class="sheet-content">
+      <h3>Настройки графика</h3>
+      <div class="chip-row" id="weekDays"></div>
+      <div class="chip-row" id="shifts">
+        <button data-shift="Д">Д</button>
+        <button data-shift="Н">Н</button>
+        <button data-shift="В">В</button>
+      </div>
+      <div class="chip-row" id="presets">
+        <button data-preset="dnvv">Мой (Д/Н/В/В)</button>
+        <button data-preset="2on2off">2/2</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка заметок -->
+  <div id="noteModal" class="modal hidden">
+    <div class="modal-content">
+      <span id="closeModal" class="close">&times;</span>
+      <h2 id="noteDate"></h2>
+      <textarea id="noteText" placeholder="Заметка..."></textarea>
+      <button id="saveNote">Сохранить</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+  </script>
+</body>
+</html>
