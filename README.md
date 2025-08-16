@@ -5,5 +5,5 @@
 ## 🚀 Запуск
 1. Склонируй проект:
    ```bash
-   git clone https://github.com/ТВОЙ_НИК/shift-calendar.git
+   git clone https://github.com/CHIZI111/shift-calendar.git
    cd shift-calendar
