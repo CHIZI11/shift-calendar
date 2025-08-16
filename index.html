@@ -1,94 +1,383 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shift Calendar</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      background: var(--bg, #fff);
-      color: var(--text, #000);
-      transition: background 0.3s, color 0.3s;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px;
-      background: var(--header, #f5f5f5);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .theme-toggle, .menu-btn {
-      font-size: 24px;
-      cursor: pointer;
-      border: none;
-      background: none;
-    }
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 8px;
-      padding: 20px;
-    }
-    .day {
-      aspect-ratio: 1/1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      font-weight: bold;
-      transition: background 0.3s, transform 0.2s;
-    }
-    .day:hover {
-      transform: scale(1.1);
-    }
-    .today {
-      background: #4caf50;
-      color: white;
-    }
-    .night { background: #90caf9; }
-    .work { background: #a5d6a7; }
-    .off { background: #ef9a9a; }
-    /* тёмная тема */
-    body.dark {
-      --bg: #121212;
-      --text: #eee;
-      --header: #1e1e1e;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shift Calendar</title>
+<meta name="color-scheme" content="light dark" />
+<style>
+  :root{
+    --bg:#ffffff; --fg:#141414; --muted:#6b7280; --card:#f6f7f9;
+    --accent:#10b981; --border:#e5e7eb;
+    --day:#ffe08a; --night:#9ec5ff; --off:#bde5c3;
+    --today:#10b981;
+  }
+  body.dark{
+    --bg:#0f1115; --fg:#e7e7ea; --muted:#9aa0ab; --card:#171a21;
+    --border:#242833; --day:#b7933a; --night:#6a8bd6; --off:#598463;
+    --today:#22c55e;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font:14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+    background:var(--bg); color:var(--fg); transition:background .25s,color .25s;
+  }
+
+  /* top bar */
+  .topbar{
+    position:sticky; top:0; z-index:5;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:8px; padding:12px 16px; background:var(--bg);
+    border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-weight:700}
+  .nav{
+    display:flex; align-items:center; gap:8px;
+  }
+  .iconbtn{
+    appearance:none; border:1px solid var(--border); background:var(--card);
+    padding:8px; border-radius:12px; cursor:pointer; transition:transform .12s ease, background .25s;
+  }
+  .iconbtn:active{transform:scale(.96)}
+  .h1{font-size:16px; margin:0; font-weight:700}
+
+  /* calendar header (month switcher) */
+  .toolbar{
+    display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 16px;
+  }
+  .btn{
+    border:1px solid var(--border); background:var(--card); color:var(--fg);
+    border-radius:10px; padding:8px 12px; cursor:pointer;
+  }
+
+  /* grid */
+  .grid{
+    --gap:12px;
+    display:grid; grid-template-columns:repeat(7,1fr); gap:var(--gap);
+    padding: 4px 16px 28px;
+    max-width:980px; margin:0 auto;
+  }
+  .weekday{
+    text-align:center; color:var(--muted); font-weight:600; letter-spacing:.02em; font-size:12px;
+    padding:8px 0;
+  }
+  .cell{
+    aspect-ratio:1/1; position:relative; display:flex; align-items:center; justify-content:center;
+  }
+  .badge{
+    width:100%; height:100%; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:16px; letter-spacing:.02em;
+    background:var(--card); border:1px solid var(--border);
+    position:relative; transition:transform .15s ease, background .25s, border-color .25s, box-shadow .25s;
+  }
+  .badge[data-s="Д"]{ background:var(--day); border-color:color-mix(in oklab, var(--day) 65%, #000 10%);}
+  .badge[data-s="Н"]{ background:var(--night); border-color:color-mix(in oklab, var(--night) 65%, #000 10%);}
+  .badge[data-s="В"]{ background:var(--off); border-color:color-mix(in oklab, var(--off) 65%, #000 10%);}
+  .badge:hover{ transform:scale(1.03); }
+
+  /* today highlight (no gap) */
+  .badge.today{
+    outline:0; box-shadow:0 0 0 0 rgba(34,197,94,.55);
+    animation:pulse 1.8s ease-out infinite;
+  }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 color-mix(in oklab, var(--today) 80%, transparent); }
+    80%{ box-shadow:0 0 0 14px color-mix(in oklab, var(--today) 0%, transparent); }
+    100%{ box-shadow:0 0 0 0 color-mix(in oklab, var(--today) 0%, transparent); }
+  }
+
+  /* bottom sheet */
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:10;
+    background:var(--bg); border-top:1px solid var(--border);
+    border-top-left-radius:18px; border-top-right-radius:18px;
+    transform:translateY(105%); transition:transform .28s cubic-bezier(.2,.8,.2,1);
+    box-shadow:0 -12px 40px rgba(0,0,0,.18);
+  }
+  .sheet.show{ transform:translateY(0); }
+  .sheet__handle{width:44px; height:4px; background:var(--border); border-radius:999px; margin:10px auto;}
+  .sheet__content{ padding:10px 16px 16px; max-width:980px; margin:0 auto;}
+
+  .chips{ display:flex; gap:8px; overflow:auto; padding-bottom:6px;}
+  .chip{
+    white-space:nowrap; border:1px solid var(--border); background:var(--card);
+    color:var(--fg); border-radius:999px; padding:8px 12px; font-weight:700; cursor:pointer;
+    transition:background .2s, color .2s, border-color .2s, transform .12s;
+  }
+  .chip:active{ transform:scale(.97); }
+  .chip.active{ background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  .section{ margin:10px 0 14px; }
+  .label{ color:var(--muted); font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:.08em; margin:0 0 8px 4px;}
+  .row{ display:flex; gap:8px; flex-wrap:wrap; }
+
+  .inline{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    padding:8px 0;
+  }
+  .inline input[type="date"]{
+    background:var(--card); border:1px solid var(--border); border-radius:10px;
+    color:var(--fg); padding:8px 12px;
+  }
+
+  /* sun/moon vector toggle */
+  .theme-toggle{ width:36px; height:36px; display:grid; place-items:center; }
+  .sunmoon{ width:22px; height:22px; display:block;}
+  .sun, .moon{ transition:opacity .35s ease, transform .35s ease; transform-origin:50% 50%;}
+  body:not(.dark) .sun{ opacity:1; transform:rotate(0deg) scale(1);}
+  body:not(.dark) .moon{ opacity:0; transform:rotate(-90deg) scale(.7);}
+  body.dark .sun{ opacity:0; transform:rotate(90deg) scale(.7);}
+  body.dark .moon{ opacity:1; transform:rotate(0deg) scale(1);}
+
+  .spacer{flex:1}
+</style>
 </head>
 <body>
-  <header>
-    <button class="theme-toggle">🌞</button>
-    <button class="menu-btn">☰</button>
+  <header class="topbar">
+    <div class="brand">
+      <button id="prevBtn" class="iconbtn" aria-label="Предыдущий месяц">‹</button>
+      <h1 id="title" class="h1">—</h1>
+      <button id="nextBtn" class="iconbtn" aria-label="Следующий месяц">›</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="nav">
+      <button id="themeBtn" class="iconbtn theme-toggle" title="Сменить тему" aria-label="Сменить тему">
+        <!-- SVG: sun + moon в одном векторе, кроссфейд -->
+        <svg class="sunmoon" viewBox="0 0 24 24" aria-hidden="true">
+          <!-- sun -->
+          <g class="sun">
+            <circle cx="12" cy="12" r="4" fill="currentColor"></circle>
+            <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="12" y1="1" x2="12" y2="4"></line>
+              <line x1="12" y1="20" x2="12" y2="23"></line>
+              <line x1="1" y1="12" x2="4" y2="12"></line>
+              <line x1="20" y1="12" x2="23" y2="12"></line>
+              <line x1="4.2" y1="4.2" x2="6.3" y2="6.3"></line>
+              <line x1="17.7" y1="17.7" x2="19.8" y2="19.8"></line>
+              <line x1="4.2" y1="19.8" x2="6.3" y2="17.7"></line>
+              <line x1="17.7" y1="6.3" x2="19.8" y2="4.2"></line>
+            </g>
+          </g>
+          <!-- moon (кружок с вырезом) -->
+          <g class="moon">
+            <path fill="currentColor" d="M15.5 22a9.5 9.5 0 0 1-9.3-11.7A8.5 8.5 0 1 0 15.5 22z"></path>
+          </g>
+        </svg>
+      </button>
+      <button id="menuBtn" class="iconbtn" aria-label="Меню">≡</button>
+    </div>
   </header>
 
-  <main class="calendar" id="calendar"></main>
+  <div id="weekHeader" class="grid" style="padding-top:8px;">
+    <div class="weekday">ПН</div><div class="weekday">ВТ</div><div class="weekday">СР</div>
+    <div class="weekday">ЧТ</div><div class="weekday">ПТ</div><div class="weekday">СБ</div><div class="weekday">ВС</div>
+  </div>
 
-  <script>
-    const calendar = document.getElementById("calendar");
-    const today = new Date().getDate();
+  <main id="grid" class="grid" aria-live="polite"></main>
 
-    // Простейший календарь на 30 дней
-    for (let i = 1; i <= 30; i++) {
-      const d = document.createElement("div");
-      d.className = "day";
-      if (i === today) d.classList.add("today");
-      if (i % 3 === 0) d.classList.add("night");
-      else if (i % 5 === 0) d.classList.add("off");
-      else d.classList.add("work");
-      d.textContent = i;
-      calendar.appendChild(d);
+  <!-- Bottom Sheet -->
+  <aside id="sheet" class="sheet" aria-hidden="true">
+    <div class="sheet__handle"></div>
+    <div class="sheet__content">
+      <div class="section">
+        <p class="label">День недели</p>
+        <div id="chipsWeek" class="chips"></div>
+      </div>
+      <div class="section">
+        <p class="label">Смена</p>
+        <div class="row">
+          <button class="chip" data-sel="Д">Д — день</button>
+          <button class="chip" data-sel="Н">Н — ночь</button>
+          <button class="chip" data-sel="В">В — выходной</button>
+          <button class="chip" data-sel="x">Сбросить</button>
+        </div>
+      </div>
+      <div class="section">
+        <p class="label">Пресеты циклов</p>
+        <div class="row">
+          <button class="chip" data-preset="dnvv">Д / Н / В / В</button>
+          <button class="chip" data-preset="2on2off">ДД / НН / ВВ (2/2)</button>
+        </div>
+      </div>
+      <div class="section inline">
+        <span class="label" style="margin:0">Старт цикла:</span>
+        <input id="cycleStart" type="date" />
+        <button id="saveStart" class="chip">Ок</button>
+        <span class="label" id="presetInfo" style="margin:0 0 0 8px"></span>
+      </div>
+      <div style="height:6px"></div>
+    </div>
+  </aside>
+
+<script>
+(() => {
+  /* ---------- state & storage ---------- */
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+  const store = {
+    get k(){ return 'shiftCalendar:v1'; },
+    read(){
+      try{ return JSON.parse(localStorage.getItem(this.k)) || {}; }
+      catch{ return {}; }
+    },
+    write(data){ localStorage.setItem(this.k, JSON.stringify(data)); }
+  };
+  const state = Object.assign({
+    theme: (matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark':'light',
+    monthOffset: 0,
+    // правила по дням недели: 1..7 (Пн..Вс) -> 'Д'|'Н'|'В'|null
+    weekdayRules: {},             // пример: {1:'Д', 2:'Н'}
+    preset: 'dnvv',               // 'dnvv' | '2on2off'
+    cycleStart: new Date().toISOString().slice(0,10) // YYYY-MM-DD
+  }, store.read());
+
+  /* ---------- theme toggle with svg crossfade ---------- */
+  const applyTheme = () => {
+    document.body.classList.toggle('dark', state.theme === 'dark');
+  };
+  $('#themeBtn').addEventListener('click', () => {
+    state.theme = (state.theme === 'dark') ? 'light' : 'dark';
+    store.write(state); applyTheme();
+  });
+  applyTheme();
+
+  /* ---------- month nav ---------- */
+  const now = new Date();
+  const firstOfMonth = (offset=0) => new Date(now.getFullYear(), now.getMonth()+offset, 1);
+  $('#prevBtn').onclick = ()=>{ state.monthOffset--; render(); };
+  $('#nextBtn').onclick = ()=>{ state.monthOffset++; render(); };
+
+  /* ---------- sheet (menu) ---------- */
+  const sheet = $('#sheet');
+  const openSheet = (yes)=>{ sheet.classList.toggle('show', yes); sheet.setAttribute('aria-hidden', yes? 'false':'true'); };
+  $('#menuBtn').onclick = ()=> openSheet(!sheet.classList.contains('show'));
+
+  const weekNames = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  const chipsWeek = $('#chipsWeek');
+  chipsWeek.innerHTML = weekNames.map((n,i)=>`<button class="chip" data-dow="${i+1}">${n}</button>`).join('');
+
+  // Выбор смены для активного дня недели
+  let activeDOW = null;
+  chipsWeek.addEventListener('click', e=>{
+    const b = e.target.closest('[data-dow]'); if(!b) return;
+    $$('.chip[data-dow]', chipsWeek).forEach(x=>x.classList.toggle('active', x===b));
+    activeDOW = +b.dataset.dow;
+  });
+  // Кнопки смен
+  $$('.row .chip[data-sel]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(!activeDOW){ alert('Сначала выбери день недели'); return; }
+      const sel = btn.dataset.sel;
+      if(sel==='x') delete state.weekdayRules[activeDOW];
+      else state.weekdayRules[activeDOW] = sel;
+      store.write(state); render();
+    });
+  });
+
+  // Пресеты
+  const presetInfo = $('#presetInfo');
+  const presets = {
+    dnvv: ['Д','Н','В','В'],
+    '2on2off': ['Д','Д','Н','Н','В','В']
+  };
+  $$('.row .chip[data-preset]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      state.preset = btn.dataset.preset;
+      store.write(state); render();
+    });
+  });
+
+  // Старт цикла
+  const cycleStartInp = $('#cycleStart');
+  const saveStart = $('#saveStart');
+  const updateCycleStartUI = ()=> { cycleStartInp.value = state.cycleStart; };
+  saveStart.onclick = ()=>{ state.cycleStart = cycleStartInp.value || new Date().toISOString().slice(0,10); store.write(state); render(); };
+  updateCycleStartUI();
+
+  /* ---------- core: build month grid ---------- */
+  const title = $('#title');
+  const grid = $('#grid');
+
+  function getShiftForDate(dt){
+    // приоритет: правило по дню недели → пресет цикла
+    const dow = ((dt.getDay()+6)%7)+1; // 1..7 (Пн..Вс)
+    const rule = state.weekdayRules[dow];
+    if(rule) return rule;
+
+    const arr = presets[state.preset] || presets.dnvv;
+    const start = new Date(state.cycleStart + 'T00:00:00');
+    const diff = Math.floor((dt - start) / (1000*60*60*24));
+    const idx = ((diff % arr.length)+arr.length)%arr.length;
+    return arr[idx];
+  }
+
+  function render(){
+    const base = firstOfMonth(state.monthOffset);
+    const y = base.getFullYear(), m = base.getMonth();
+    title.textContent = base.toLocaleString('ru', {month:'long', year:'numeric'});
+
+    // инфо по пресету
+    presetInfo.textContent = `Пресет: ${state.preset === 'dnvv' ? 'Д / Н / В / В' : 'ДД / НН / ВВ'}`;
+
+    // очистка
+    grid.innerHTML = '';
+
+    // пустые до первого дня
+    const firstDow = ((new Date(y,m,1).getDay()+6)%7)+1; // 1..7
+    for(let i=1;i<firstDow;i++){ const d = document.createElement('div'); grid.appendChild(d); }
+
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    for(let d=1; d<=daysInMonth; d++){
+      const dt = new Date(y,m,d);
+      const shift = getShiftForDate(dt);
+
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      const badge = document.createElement('div');
+      badge.className = 'badge';
+      badge.dataset.s = shift;
+      badge.textContent = d;
+      cell.appendChild(badge);
+
+      const isToday = (()=> {
+        const t=new Date();
+        return d===t.getDate() && m===t.getMonth() && y===t.getFullYear() && state.monthOffset===0;
+      })();
+      if(isToday) badge.classList.add('today');
+
+      grid.appendChild(cell);
     }
 
-    // переключение темы
-    const toggle = document.querySelector(".theme-toggle");
-    toggle.addEventListener("click", () => {
-      document.body.classList.toggle("dark");
-      toggle.textContent = document.body.classList.contains("dark") ? "🌙" : "🌞";
+    // обновить активные чипсы недель по состоянию
+    $$('.chip[data-dow]', chipsWeek).forEach(btn=>{
+      btn.classList.toggle('active', +btn.dataset.dow===activeDOW);
+      btn.title = state.weekdayRules[+btn.dataset.dow] ? `Назначено: ${state.weekdayRules[+btn.dataset.dow]}` : 'Не назначено';
     });
-  </script>
+
+    store.write(state);
+  }
+
+  render();
+
+  // закрытие шита по свайпу вниз (простое)
+  let startY=null;
+  sheet.addEventListener('touchstart',e=>{ startY=e.touches[0].clientY; },{passive:true});
+  sheet.addEventListener('touchmove',e=>{
+    if(startY==null) return;
+    const dy = e.touches[0].clientY - startY;
+    if(dy>50) openSheet(false);
+  },{passive:true});
+  // клик вне шита для закрытия
+  document.addEventListener('click', e=>{
+    if(!sheet.classList.contains('show')) return;
+    const inside = e.target.closest('.sheet');
+    const isMenuBtn = e.target.closest('#menuBtn');
+    if(!inside && !isMenuBtn) openSheet(false);
+  });
+
+})();
+</script>
 </body>
 </html>
