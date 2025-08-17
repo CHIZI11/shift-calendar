@@ -1,0 +1,95 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.3s, color 0.3s;
+}
+
+:root {
+  --bg: #fdfdfd;
+  --text: #111;
+  --accent: #4caf50;
+}
+
+body.dark {
+  --bg: #121212;
+  --text: #eee;
+  --accent: #81c784;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+header button {
+  background: none;
+  border: none;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+header svg {
+  width: 24px;
+  height: 24px;
+  fill: var(--text);
+}
+
+#calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  padding: 1rem;
+}
+
+.day {
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-weight: bold;
+}
+
+.day.today {
+  outline: 3px solid var(--text);
+}
+
+#menu {
+  position: fixed;
+  bottom: -100%;
+  left: 0;
+  right: 0;
+  background: var(--bg);
+  border-top: 2px solid var(--accent);
+  transition: bottom 0.3s ease;
+}
+
+#menu.open {
+  bottom: 0;
+}
+
+.menu-content {
+  padding: 1rem;
+}
+
+.menu-content button {
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 0.7rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
